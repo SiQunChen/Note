@@ -183,6 +183,52 @@
 
 # Chapter 4 : Threads & Concurrency
 ## Multicore Programming
+![image](https://hackmd.io/_uploads/H1tgXOTA6.png)
+### Types of parallelism
+![image](https://hackmd.io/_uploads/BJpj7OT06.png)
+* Data parallelism : 將一個 data 切割成多個 data 執行，每個 core 執行同樣的任務
+* Task parallelism : 將一個 data 切割成多個 task 執行，每個 core 執行不同的任務
+### Amdahl's Law : 評估多核的效率
+> S 表示必須依序完成的部分(不能同時進行)，N 表示有幾個 cores  
+> 若 N 為無窮大，則能夠快 1/S 倍  
+> S 為決定效率最重要的部分  
+> ![image](https://hackmd.io/_uploads/B1xc4ua0a.png)
+:::info
+* Q : 假設一個應用程式有 75% parallel and 25% serial，並且有 2 cores
+* A : 1/(0.25 + (0.75 / 2)) = 1.6 倍，即 2 cores 比 1 core 快 1.6 倍
+:::
 ## Multithreading Models
+* Many-to-One
+    * 較早期的作法，因為只有單核，所以 user threads 必須輪流進行
+    * ![image](https://hackmd.io/_uploads/SJWCo_60p.png)
+* One-to-One
+    * 能夠平行處理，但缺點是效率有所限制 => user threads 不能超過核心數
+    * ![image](https://hackmd.io/_uploads/BJdznupCa.png)
+* Many-to-Many
+    * 較複雜，需要進行處理
+    * ![image](https://hackmd.io/_uploads/HJkt2_p06.png)
+* Two-level Model 
+    * 較常見，融合 One-to-One, Many-to-Many
+    * ![image](https://hackmd.io/_uploads/B1heTdpAp.png)
 ## Thread Libraries
+提供一個 API 控制哪些程式的 Function 要分配給哪些 threads 執行
+* Pthreads : POSIX API，主要用在 UNIX 系統
+* Windows 也有提供相關 API，只是沒有固定名稱
+* Java Threads 
 ## Operating System Examples
+* Windwos Threads
+    * kernel space
+        * ETHREAD : 指向 KTHREAD
+        * KTHREAD : 指向 TEB
+    * user space
+        * TEB
+* Linux Threads  
+    * Linux 叫 tasks 而不是叫 threads
+# Chapter 5 : CPU Scheduling
+CPU 空閒下來時，選一個 process 執行
+## Scheduling Criteria
+## Scheduling Algorithms
+## Thread Scheduling
+## Multi-Processor Scheduling
+## Operating Systems Examples
+## Algorithm Evaluation
