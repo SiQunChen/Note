@@ -179,8 +179,6 @@
 * Sockets
 * Remote Procedure Calls(RPC)
 
-
-
 # Chapter 4 : Threads & Concurrency
 ## Multicore Programming
 ![image](https://hackmd.io/_uploads/H1tgXOTA6.png)
@@ -227,8 +225,90 @@
 # Chapter 5 : CPU Scheduling
 CPU 空閒下來時，選一個 process 執行
 ## Scheduling Criteria
+* CPU utilization : 讓 CPU 越忙越好
+* Throughput : 單位時間內完成任務的數量越多越好
+* Turnaround time : 執行時間越短越好
+* Waiting time : 等待時間越短越好
+* Response time : 回應時間越短越好
 ## Scheduling Algorithms
-## Thread Scheduling
+* FCFS (First Come First Served)
+    * Convoy effect : 先執行時間較久的 process 會導致 waiting time 較多
+    > 範例 1
+    > ![image](https://hackmd.io/_uploads/HJG8Bvr1A.png)
+    > 範例 2
+    > ![image](https://hackmd.io/_uploads/BJ-6rvSyR.png)
+    > 範例 2 比範例 1 更好，因為順序的原因導致 waiting time 較少
+* SJF (Shortest-Job-First)
+    * 較短的 process 優先
+    > 範例 1
+    > ![image](https://hackmd.io/_uploads/SyffKsB1C.png)
+    > 範例 2 (preemptive)  
+    > 如果有新的 process 進來會重新進行評估，讓最短的插隊  
+    > average waiting time : 每個 process 用**全部跑完的開始 - 前面已經執行的時間 - 抵達的時間**
+    > 舉例 process 1 : 從 10 開始全部跑完 - 已經執行過 1 - 抵達時間為 0
+    > ![image](https://hackmd.io/_uploads/HyM7qjS10.png)
+    * 缺點 : 我們無法知道下個 process 的時間多少 => 只能用預測 (exponential averaging)
+        * 從上一個預測的值或上一個實際的值做預測，α = 1/2 為兩者以一樣的權重預測(0~1)
+        * ![image](https://hackmd.io/_uploads/SJ283sSJA.png)
+        > 範例  
+        > ![image](https://hackmd.io/_uploads/SyvbpjrJC.png)
+* RR (Round Robin)
+    * 公平分配每個 process 的時間，時間到不管如何就切換。
+    * 一個時間單位叫做 time quantum
+    * 主要在減少 response time 的時間
+    * Performance
+        * q large => FIFO
+        * q small => 太頻繁切換導致 overhead 太大
+        * q 最好大過於 80% 的 process
+        * ![image](https://hackmd.io/_uploads/rJfCq2YJA.png)
+    > 範例  
+    > Quantum = 4  
+    > ![image](https://hackmd.io/_uploads/ryubvnKyA.png)
+* Priority Scheduling
+    * 每個 process 賦予一個 priority
+    * Preemptive
+    * Nonpreemptive
+    * Problem : Starvation (priority 小到一直有權限比他大的插隊)
+        * Solution : Aging (動態提升 priority => 等得越久，priority 越高)
+    > 範例 1  
+    > ![image](https://hackmd.io/_uploads/S1r903t1C.png)
+    > 範例 2  
+    > priority 值相同的情況使用 Round-Robin
+    > ![image](https://hackmd.io/_uploads/BkCTAnY10.png)
+* Multilevel Queue (Priority Scheduling 延伸)
+    ![image](https://hackmd.io/_uploads/SJGrepYyR.png)  
+    * Multilevel Feedback Queue
+        * 動態調整 priority
+        > 範例
+        > ![image](https://hackmd.io/_uploads/rJilZTY10.png)
+## Thread Scheduling  
+* process-contention scope (PCS) : 同一個 process 內的 thread 競爭
+* system-contention scope (SCS) : 不同 process 的 thread 競爭
 ## Multi-Processor Scheduling
+> 一個 CPU 有 8 個核心，每個核心又有兩個 hardware threads  
+> ![image](https://hackmd.io/_uploads/H1GDNpFk0.png)  
+> 第一層為 hardware threads 要如何分配執行 software threads  
+> 第二層為 processing core 要如何分配執行 hardware threads  
+> ![image](https://hackmd.io/_uploads/SyDDBaYkA.png)  
+* Symmetric multiprocessing (SMP)
+    * common ready queue
+        * ![image](https://hackmd.io/_uploads/Sy2Y76Fk0.png)
+    * per-core queues
+        * ![image](https://hackmd.io/_uploads/HyaqQ6FkC.png)
+* memory stall
+    * ![image](https://hackmd.io/_uploads/Bk5XVTY1A.png)
+### Load Balancing : 如何讓每個 CPU 都很忙
+* Push migration : 很忙的 core 丟任務給空閒的 core
+* Pull migration : 空閒的 core 去很忙的 core 抓任務執行
+### Processor Affinity
+舉例 : core1 執行到一半的任務丟給 core2 執行，但是 core1 已經處理完前面的 data 存放在 cache 了，這樣反而會讓 core2 重頭執行，如果全部 data 丟過去會消耗更多資源
+* Soft affinity : 盡量讓同個任務在同個 core 執行，但是不保證，load 時間太久還是會移走
+* Hard affinity : 強制讓同個任務在同個 core 執行，不會被移走
+### NUMA and CPU Scheduling
+用到其他核心的 memory
+![image](https://hackmd.io/_uploads/BJEvO6ty0.png)
 ## Operating Systems Examples
+* Linux scheduling
+* Windows scheduling
+* Solaris scheduling
 ## Algorithm Evaluation
