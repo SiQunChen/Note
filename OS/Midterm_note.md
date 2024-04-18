@@ -32,6 +32,8 @@
         * 作業系統可強制剝奪CPU資源並分配給它認為目前最需要的行程。
         * 如果作業系統分配給每個行程的時間都很短，即CPU在多個行程間快速切換，看起來會像是很多行程都在同時執行。
     * 目前幾乎所有現代OS都是採用這種方式，比如UNIX、Linux、Windows NT以後的版本、Mac OS X以後的版本。
+### 各方法資訊整理
+![image](https://hackmd.io/_uploads/SkkaNtp10.png)
 ## Management
 ### Process Management
 * Program 是靜態的， process 是動態的
@@ -307,8 +309,181 @@ CPU 空閒下來時，選一個 process 執行
 ### NUMA and CPU Scheduling
 用到其他核心的 memory
 ![image](https://hackmd.io/_uploads/BJEvO6ty0.png)
-## Operating Systems Examples
-* Linux scheduling
-* Windows scheduling
-* Solaris scheduling
 ## Algorithm Evaluation
+* Deterministic modeling
+    * 假設固定的 workload 用不同的演算法測試計算 waiting time, response time...
+    * 優點 : 簡單
+    * 缺點 : 因為指針對預先固定的 Workload，所以有可能在其他的 workload 上不適用
+* Queueing Models
+    * 不固定 workload，用機率方式描述 workload
+    * 優點 : 較有系統化的測試，預測各種 workload 進行評估
+    * 缺點 : 實際上的案例跟機率計算的案例不一定符合
+* Simulations
+    * 蒐集各種真實數據，模擬實際情況
+    * 優點 : 相較於前兩種方法較準確
+    * 缺點 : 麻煩，準確度也僅限蒐集到的資料
+* Implementation
+    * 不模擬，實際操作
+    * 優點 : 最為準確，能夠正確評估各種 process 的效率
+    * 缺點 : 成本高、風險高(如果程式寫錯，會導致整台電腦 error)
+
+# Chapter 6 : Synchronization Tools
+## Background
+* 資料不一致 : 如果一個 process update data, 另一個 process read data
+## The Critical-Section Problem
+* 設計一個 protocol 當一個 process 在使用 data 時，其他的 process 要先發出 entry section 訪問存取權，當 process 使用完 data 時要發出 exit section 通知其他 process
+* 為了實作 protocol 需要設計一些要求
+    * Mutual Exclusion : 當一個 process 在使用 data 時，其他的 process 不能訪問 data
+    * Progress : 沒有 process 使用 data 時，要在有限的時間內決定下一個 process
+    * Bounded Waiting : 等待中的 process 有上限，不能等太久
+### Interrupt-based Solution
+* 當 Entry section : 把 interrupts 關閉，別人不能發出 interrupts
+* 當 Exit section : 把 interrupts 打開，別人能夠發出 interrupts
+* 可能遇到的問題
+    * 成功 Entry section 的 process 執行太久，其他 process 不能用
+    * 等待的 process 一直被插隊，導致一直不能使用
+    * 如果有兩個 CPU 的話，會有更多的問題
+### Software Solution 1
+* 從 code 上做檢查
+* 兩個假設簡化問題
+    * 假設只有兩個 process
+    * 假設執行過程不會被 interrupt
+* ![image](https://hackmd.io/_uploads/rJsFFMFeA.png)
+* 問題
+    * 可能不符合 Progress ，假設 j 速度很快，i 就一直輪不到他執行
+## Peterson's Solution
+* 兩個假設簡化問題
+    * 假設只有兩個 process
+    * 假設執行過程不會被 interrupt
+* 多了 flag 表示 process 是否已經準備好 entry section
+* ![image](https://hackmd.io/_uploads/HkM-TBFeA.png)
+* 在現代架構中可能無法 work
+    * processors or compilers 可能會因為效率問題 reorder
+    * ![image](https://hackmd.io/_uploads/HJ6QJLYlC.png)
+### Memory Barrier (硬體 support)
+* data 改變時會立即告訴 CPU
+* 確保 load and store 能夠完全做完，即使 reorder 也無仿
+* ![image](https://hackmd.io/_uploads/r1erZ8FlR.png)
+## Mutex Locks (spinlock)
+* 兩個模式 : acquire, release
+* 兩個模式必須 atomic (不會被 interrupt)
+* acquire : 進去前取得許可
+* release : 出來前釋放資源
+* 問題
+    * busy waiting : 要不斷在 while loop 不斷 check
+    * 如果在雙核心以上，一個 core 在 busy waiting ，其他的 core 還可以動
+    * 但在單核心如果沒有適當機制切換的話就會卡住
+## ✭ Semaphores
+* 兩個模式 : wait, signal
+* 兩個模式必須 atomic (不會被 interrupt)
+* wait : check S 的值是否大於 0，如果小於 0 就 wait，會把 S--
+* signal : 把 S++
+* Binary semaphore : 值在0, 1之間切換，如同 Mutex Locks
+* Counting semaphore : 可以計算
+### Semaphores Implementation with no Busy waiting
+* use waiting queue
+* block : if a process waiting, let it go the block
+* wakeup : if a process signal, from block choose one wakeup
+* ![image](https://hackmd.io/_uploads/SkK_ewKeC.png)
+### Problems with Semaphores
+* 先 signal 後 wait
+* 只有 wait 沒有 signal
+## Monitors
+* 類似於 class 的方式，能夠更輕鬆實作
+* 自動幫 process 增加保護機制(signal, wait...)
+# Chapter 7 : Synchronization Examples
+## Bounded-Buffer Problem
+* 共用的有限 buffer 問題
+* mutex : 控制同一時間只有一個 process 能夠 access，初始值為 1
+* full : 目前有多少個空間被占用，每次 +1，初始值為 0
+* empty : 有 n 個空間，每次 -1，初始值為 n
+## Readers-Writers Problem
+* 資料不同步問題
+* rw_mutex : 控制讀或寫，初始值為 1
+* mutex : 控制 buffer 存取，初始值為 1
+* read_count : 用整數紀錄目前 read 的 process 數量，初始值為 0
+### Readers-Writers Problem Variations
+* Problem
+    * First reader-writer
+        * 如果太多 read，導致沒有辦法 write
+* Solution
+    * Second reader-writer
+        * 如果 write 進 wait，後面 read 要等 write 結束
+        * 但可能會變成太多 write 導致不能 read
+## Dining-Philosophers Problem
+* 假想問題
+    * 5 個哲學家、 5 個碗、 5 支筷子，他們必須要 share 筷子
+    * ![image](https://hackmd.io/_uploads/BJH6xnAgC.png)
+* Solution
+    * 如果某個哲學家要用餐的話，要先問過左右邊的人
+        * 假如左上跟下面一組，右上跟左下一組，他們輪流吃飯，會導致右下角一直吃不到
+        * 改成如果要用餐時，左右邊有人吃飯就設為 hungry 並等待。
+        * 吃完的人確認左右邊是否有人 hungry，有的話 signal 他
+        * 還是有可能會有人沒吃到的問題，並沒有完全解決
+## Kernel Synchronization - Windows
+* spinlocks
+* dispatcher objects (類似 mutex, semaphore)
+    * Events (類似 condition variable)
+    * signaled-state
+    * non-signaled-state
+## Linux Synchronization
+* Atomic integers
+* Mutex locks
+* Spinlocks, Semaphores
+* Reader-writer versions of both
+## Alternative Approaches
+* Transactional Memory
+    * 硬體 support
+* OpenMP
+    * 能夠告訴編譯器需要做一些特殊處理
+* Functional Programming Languages
+    * 必須透過 function 才能執行
+    * 假設一個變數，一定需要 function 才能夠變更他的 value
+
+# Chapter 8 : Deadlocks
+* Deadlock with Semaphores
+    * ![image](https://hackmd.io/_uploads/SyL8taAeC.png)
+* Deadlock Characterization
+    * Mutual exclusion : 同一個時間只能有一個 process 使用
+    * Hold and wait : 一個 process hold 一個資源，並且再 wait 其他 process
+    * No preemption : 除非主動釋放，否則其他 process 不能動用資源
+    * Circular wait : 多個 process 都在 hold and wait
+## Resource-Allocation Graph
+* V(vertices) : 
+    * P : 多個 process
+    * R : 多個 resource
+* E(edges) : 
+    * request edge : Pi -> Rj
+    * assignment edge : Rj -> Pi3
+* Example 1 : 
+    * ![image](https://hackmd.io/_uploads/HkLJ2aReA.png)
+    * if T3 -> R2 will appear deadlock
+    * cuz R2 only 2 resource, already allocate to T1 and T2. And T1 wait T2, T2 wait T3.
+    * so T3 has to wait T1 or T2 release resource
+    * ![image](https://hackmd.io/_uploads/HywEhTAxC.png)
+* Example 2 : 
+    * Graph with a Cycle But no Deadlock
+    * cuz T1 only wait T2 release resource, don't wait T3. And T3 both
+    * ![image](https://hackmd.io/_uploads/r1nuTT0xR.png)
+* Basic Facts
+    * if graph no cycles => no deadlock
+    * if graph have a cycle
+        * if only one instance => deadlock
+        * if several instances => **possibility** of deadlock
+## Methods for Handling Deadlocks
+* 如何確保系統不會 deadlock ?
+    Deadlock prevention : 盡可能讓上面的四個形成 deadlock 必要條件不成立
+    Deadlock avoidance : 監控 process 運作時所需要的 resource 並適時調整
+* 等 deadlock 再解決
+* 不管 deadlock
+### Deadlock Prevention
+* Mutual exclusion (較難解決)
+    * 如果請求全部都是 read ，因為不會更動到 data，所以可以讓 process 同時取用
+* Hold and wait (較難解決)
+    * 在程式最一開始就配置好所有 resource
+        * 可能在過程中還是要 share data，無法在一開始就全部分配好
+* No preemption (較難解決)
+    * 如果無法立即拿到資源的話，就釋放手中的資源
+        * 資源使用效率低
+* Circular wait
+    * 照順序拿資源
