@@ -246,8 +246,8 @@ CPU 空閒下來時，選一個 process 執行
     > ![image](https://hackmd.io/_uploads/SyffKsB1C.png)
     > 範例 2 (preemptive)  
     > 如果有新的 process 進來會重新進行評估，讓最短的插隊  
-    > average waiting time : 每個 process 用**全部跑完的開始 - 前面已經執行的時間 - 抵達的時間**
-    > 舉例 process 1 : 從 10 開始全部跑完 - 已經執行過 1 - 抵達時間為 0
+    > waiting time : 每個 process 用**全部跑完的時間 - 抵達的時間 - 執行時間**
+    > 舉例 process 1 : 從 10 開始全部跑完 - 最一開始執行到 1 被中斷
     > ![image](https://hackmd.io/_uploads/HyM7qjS10.png)
     * 缺點 : 我們無法知道下個 process 的時間多少 => 只能用預測 (exponential averaging)
         * 從上一個預測的值或上一個實際的值做預測，α = 1/2 為兩者以一樣的權重預測(0~1)
@@ -261,7 +261,7 @@ CPU 空閒下來時，選一個 process 執行
     * Performance
         * q large => FIFO
         * q small => 太頻繁切換導致 overhead 太大
-        * q 最好大過於 80% 的 process
+        * q 最好大過於 80% 的 process  
         * ![image](https://hackmd.io/_uploads/rJfCq2YJA.png)
     > 範例  
     > Quantum = 4  
@@ -475,7 +475,7 @@ CPU 空閒下來時，選一個 process 執行
     Deadlock prevention : 盡可能讓上面的四個形成 deadlock 必要條件不成立
     Deadlock avoidance : 監控 process 運作時所需要的 resource 並適時調整
 * 等 deadlock 再解決
-* 不管 deadlock
+* 不管 deadlock => 目前大部分作業系統採用這個，遇到就自行重新開機
 ### Deadlock Prevention
 * Mutual exclusion (較難解決)
     * 如果請求全部都是 read ，因為不會更動到 data，所以可以讓 process 同時取用
@@ -487,3 +487,120 @@ CPU 空閒下來時，選一個 process 執行
         * 資源使用效率低
 * Circular wait
     * 照順序拿資源
+### Deadlock Avoidance
+* 需要事先就宣告系統執行時所需要的資源
+* 動態監控系統中的資源，Ex : 還剩多少、已使用多少...
+* 確保系統不會進入不安全狀態
+* 如果系統目前在不安全狀態，則讓目前發送要求的 process 先 wait
+* 其他 process 如果能讓系統在安全狀態就先執行
+#### What is Safe State?
+* 如果現在系統剩下的資源能夠讓接下來所有的 process 都執行完
+#### How to inspect Safe State?
+* Single instance
+    * Use a resource-allocation graph
+        * Claim edge (通常用虛線表示) : 當 process 需要資源時，會需要先發送宣告，確保不會不安全，之後才會正式發送 request。
+        > Example1
+        > T1, T2 需要 R2 正在發送宣告，T2 已發出 request 給 R1，R1 再給 T1 資源
+        > ![image](https://hackmd.io/_uploads/S19Q6mdWR.png)
+        > Example2
+        > T2 發送 request 後，R2 給 T2 資源
+        > 但如果 T1 發送 request 給 R2 的話就會進入不安全狀態
+        > 所以 T1 發送宣告的時候就會被擋下來了
+        > ![image](https://hackmd.io/_uploads/ByBja7dWC.png)
+
+* Multiple instances
+    * Use the Banker's Algorithm
+        * Available : 表示系統目前各種資源有多少是可用的
+        * Max : 每個 process 最多會用到多少的資源
+        * Allocation : 目前配置多少的資源給每個 process 了
+        * Need : 目前的 process 還需要多少資源
+    * Safety Algorithm
+        ![image](https://hackmd.io/_uploads/HJp1eNO-C.png)
+    * Resource-Request Algorithm
+        * 判斷是否可以配置資源給 process
+        * 假設如果真的配置給 process 的話會不會不安全
+        * 如果不會的話再真的配置給他
+        * ![image](https://hackmd.io/_uploads/HyqMKZtWA.png)
+    * Example
+        * Banker's Algorithm
+            > 執行順序如果是 P1, P3, P4, P2 ， 則會保持 Safe  
+            > P0 的話會不安全
+            > ![image](https://hackmd.io/_uploads/Sy6pKWY-0.png)
+            > (Need 可以從 Max - Allocation 獲得)  
+            > ![image](https://hackmd.io/_uploads/S1Q49WtWR.png)
+        * Resource-Request Algorithm
+            > ![image](https://hackmd.io/_uploads/BJv3aZY-A.png)
+### Deadlock Detection
+* Single instance
+    * Wait-for Graph
+        > Resource-Allocation Graph, Wait-for Graph 比較圖
+        > ![image](https://hackmd.io/_uploads/Bkgq7yfFb0.png)
+    * 演算法檢查是否 cycle，最基本要 O(n^2) 的時間
+* Multiple instances
+    > ![image](https://hackmd.io/_uploads/BJowgztbR.png)
+    > ![image](https://hackmd.io/_uploads/r12dgzKZ0.png)
+    * Example
+        > ![image](https://hackmd.io/_uploads/SJ3vWGtbR.png)
+        > ![image](https://hackmd.io/_uploads/HkmKWzKZ0.png)
+* Usage
+    * 偵測頻率等等參數需要是系統情況而定
+* 發生 Deadlock 後該如何解開?
+    * 停止全部 process 執行並重新啟動
+    * 將發生 deadlock 的 cycle 一個一個終止
+        * 先終止哪個 process ?
+            * Priority
+            * 執行過久的
+            * 用太多資源的
+            * 還需要很多資源的
+            * 哪幾個 process 最快可以解開 deadlock
+    * Resource Preemption
+        * 允許優先權較高的 process 先使用 => Selecting a victim
+        * 把原本暫停的 process 回復 => Rollback
+        * 如果 process 一直被暫停 => Starvation
+# Chapter 9 : Main Memory
+* Logical address : process 看到的 memory 位置 => 相對位置
+* Physical address : Memory 中實際的位置
+* Ex : 
+    * process 上面寫 memory 從 0 開始，但實際上的 Memory 不是從 0 開始，而是那個 process 的 0 開始
+* Memory-Management Unit (MMU)
+    * 將 Logical address 轉換成 Physical address 的東西
+## Contiguous Memory Allocation
+* 給每一個 process 一個範圍，讓他只能使用那個範圍
+* 位置計算就直接相加就好
+* 問題 : 
+    * 限制了 process 使用記憶體的空間
+    * 如果不用這麼大的空間會導致浪費
+* 解決 : 
+    * Variable Partition
+        * 要多少空間就給多少空間
+    * 延伸問題
+        > 記憶體可能會變得零碎，導致不連續 => Hole
+        > ![image](https://hackmd.io/_uploads/Hyhr14t-A.png)
+        * Fragmentation
+            * External Fragmentation : 所有空間加起來很大，但是不連續
+            * Internal Fragmentation : 配置很多空間，但實際上用的不多
+    * 解決
+        * Dynamic Storage-Allocation Problem
+            * First-fit
+                * 選一個 Hole
+            * Best-fit
+                * 比 process 大的所有 Hole 選最小的
+            * Worst-fit
+                * 選最大的 hole，這樣切完的 hole 還是會很大
+        * compaction
+            * 移動記憶體位置，使其合併
+            * 但如果執行到一半移動位置，可能會造成 error
+            * 而且會花很多時間
+## Discontiguous Memory Allocation
+### Segmentation
+* 將 process 分開放
+* Data 放一塊，stack 放一塊，code 放一塊3
+* 還是會有 External Fragmentation 的問題
+### Paging
+* 將 memory 切成好幾塊
+    * physical memory 叫做 frames
+    * logical memory 叫做 pages
+* 假設 pages 是連續的，但在 physical memory 可以隨便放不用連續，只需要紀錄好 frames, pages 的對應關係
+* page table : 存放 frames, pages 的對應關係
+* 還是有 Internal Fragmentation 的問題
+## Swapping
