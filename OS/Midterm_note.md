@@ -1,3 +1,69 @@
+# 考古
+## 2022
+### 第七題
+![image](https://hackmd.io/_uploads/BylqrZgGC.png)
+1. 在 uniprocessor 會有效，因為一次只有一個執行緒可以運行。但multiprocessor會出現下列問題：  
+![image](https://hackmd.io/_uploads/SJenrWlMC.png)
+2. 為了避免忙等待,需要引入阻塞原語。當一個進程嘗試獲取已被持有的鎖時,它應該被阻塞(sleep)並加入等待隊列,而不是忙式等待。當鎖被釋放時,等待隊列中的某個進程會被喚醒並獲得鎖。這樣可以避免CPU周期的浪費。
+![image](https://hackmd.io/_uploads/HJ4RrWez0.png)
+3. ~  
+![image](https://hackmd.io/_uploads/rkp8IZgzC.png)
+## 2023
+### 第一題
+![image](https://hackmd.io/_uploads/S11gz-gGA.png)
+1. CPU、memory、輸入/輸出設備(IO)和系統匯流排(BUS)。它們通過系統匯流排相互連接。
+2. 應用程序發出I/O請求->操作系統捕獲並處理該請求->檢查設備狀態->與設備控制器協調傳輸->實際傳輸數據->處理完成中斷->返回應用程序。
+### 第二題
+![image](https://hackmd.io/_uploads/HJmrzbeGR.png)
+* 中斷的作用是允許外部事件及時響應,不至於長時間占用CPU等待。
+* 通常通過中斷服務例程(ISR)來處理各種中斷。儲存原本 process 的進度，從另一個 process 一半的進度繼續。
+* 現代OS通常採用中斷驅動設計,主要好處是提高了實時響應能力和系統效率。
+### 第三題
+![image](https://hackmd.io/_uploads/BJ-IzWlzR.png)
+1. 錯誤。多線程無法每次都比單線程解決方案性能更好,這取決於問題的特性和並行度等因素。
+2. 錯誤。用戶級線程的並行運行受限於單CPU的硬件並行度。
+3. 正確。
+4. 錯誤。多核CPU的性能提升主要受限於問題的並行度、高速緩存一致性開銷等多方面因素。
+5. 正確。在多處理器系統上,適當使用多線程能夠更好地利用硬件資源,從而提高性能。
+### 第四題
+![image](https://hackmd.io/_uploads/BJ_Pz-eGR.png)
+1. 死鎖預防是確保四個死結必要條件(互斥、佔有並等待、非搶占式和循環等待)其中至少一個永遠不會滿足,這樣就根本不可能發生死結。這種方法簡單直接,但可能會導致資源利用率低和系統吞吐量降低。死鎖避免是通過持續監控系統狀態，確保不進入死鎖狀態。常用方法是銀行家算法，它通過分析進程的資源需求和資源可用情況，確保系統不進入不安全狀態。雖然這種方法提供了更好的資源利用和系統效率，但可能需要較高的計算和監控成本。此外，確定進程的最大資源需求可能會很困難，因此在某些情況下可能會面臨設計挑戰
+2. ~
+> Max - Allocation  
+> ![image](https://hackmd.io/_uploads/S1CM7ZxGA.png)
+* P0 -> P1 -> P2 -> P3 -> P4, safe state
+* 將 `available – (1,1,0,0), P[i]_Allocation + (1,1,0,0)` 進行banker’s algorithm 查看是否 safe
+### 第五題
+![image](https://hackmd.io/_uploads/HySdzZlzC.png)
+1. 自旋鎖的問題在於它在取得鎖失敗時會一直主動循環查詢(自旋)是否可以獲得鎖,從而浪費大量CPU週期。 在單處理器系統中這種開銷是很大的,但多處理器系統上自旋時可以被調度出去執行其他進程。
+2. semaphore的想法是維護一個可被多個進程存取的整數值, 對其進行P/V操作來獲取/釋放資源。 它與互斥鎖最大的區別是一個semaphore可以同時被多個進程持有(值大於1),支援更複雜的同步需求。 互斥鎖是一個二值訊號量，一次只允許一個thread訪問resource。
+### 第六題
+![image](https://hackmd.io/_uploads/HyOYzZgGC.png)
+1. ~
+* address translation structures:純分頁用page table，純分段用segment table
+* fragmentation:純分頁存在內部碎片化，因為頁面大小固定，而純分段有外部碎片化，因為段的大小可變
+* ability to share code across processes:分頁方便共享，分段也支持但要共享段
+* memory protection:分頁按頁設定保護權限，分段按段設定
+2. ~
+    > 有效記憶體存取時間 (EMAT) = TLB命中（TLB時間+主記憶體時間）+ TLB未命中（ TLB時間+2×主記憶體時間）  
+    > ![image](https://hackmd.io/_uploads/Sk0MEZxz0.png)
+3. ~
+* 影響:增大頁表大小，需要更多層級，導致更大的記憶體占用
+* sol: multi-level page tables、壓縮頁表、大頁面
+4. ~
+* 概念: 虛擬記憶體允許程序表現出超過實體記憶體容量的記憶體使用量，增強multi process運行的安全性和效率
+* 實現方式:通過damad paging實現，只在程序訪問時才將所需頁面從硬碟加載到記憶體，並在記憶體滿時進行頁面置換
+### 第七題
+![image](https://hackmd.io/_uploads/HyHcf-efA.png)
+1. 各進程在三種調度算法下的周轉時間(turnaround time)為:
+* SJFS: P2(1) P1(3) P4(7) P5(12) P3(20)
+* 非剝奪優先級: P3(8) P5(13) P1(15) P4(19) P2(20)
+* RR(q=2): P1(2) P2(3) P4(13) P5(18) P3(20)
+2. 各進程在三種調度算法下的等待時間(waiting time)為:
+* SJFS: P2(0) P1(1) P4(3) P3(7) P5(12) => 23/5 = 4.6
+* 非剝奪優先級: P3(0) P5(8) P1(13) P4(15) P2(19) => 55/5 = 11
+* RR(q=2): P1(0) P2(2) P4(9) P5(13) P3(12) => 36/5 = 7.2
+#### SJF waiting time 最小
 # Chapter 1 : Introduction
 * Interrupt : 可以讓 CPU 跟 I/O 同時做事情
 * Dual-mode : OS 區隔權限成兩種模式(User mode, kernel mode)
@@ -81,6 +147,8 @@
 * Information maintenance
 * Communications
 * Protection
+### DMA （Direct Memory Access，直接存儲器訪問）
+* DMA 允許外部設備（如硬盤驅動器、網絡接口卡等）直接訪問主記憶體，而不需要CPU的介入，提高數據傳輸的效率。
 ## Operating System Structure
 * Simple structure(最簡單的) - MS-DOS
 * More complex(還是很簡單、沒有層次) - UNIX
@@ -135,6 +203,12 @@
     * 儲存原本程式執行到一半的進度
     * 從另一個程式一半的進度繼續執行
     * ![image](https://hackmd.io/_uploads/rJpDLa36a.png)
+* ISR (Interrupt service routine)
+    * 中斷服務程序，用於處理系統中斷事件的程序。當系統中發生了某些特定事件（例如硬體中斷、軟體中斷等），CPU會停止正在執行的任務，並轉而執行 ISR。
+    * **硬體中斷**：當硬體設備需要與 CPU 進行通訊時，例如設備完成了數據傳輸，硬體錯誤等，會觸發硬體中斷。系統會執行相應的 ISR 來處理這些中斷事件。
+    * **軟體中斷**：這些是由 CPU 內部或軟體觸發的中斷。例如，當操作系統需要執行某些臨時操作時，它可以發起軟體中斷，以執行相應的 ISR。
+    * **Interrupt-driven**
+        * 處理器不需要不斷地輪詢設備狀態，而是可以響應設備的異步事件。這種方式使得處理器能夠更有效地利用時間，而不必等待某些事件的完成。
 ## Operations on Processes
 * Process creation
     * 程式執行時會有 Parent 跟 children 形成 tree
@@ -159,15 +233,26 @@
 * 分為兩種方法
     * ![image](https://hackmd.io/_uploads/r1XYUinC6.png)
 ### IPC in Shared-Memory Systems
-* 一個共享記憶體給他們讀寫
-* 可能會有同步問題 => Producer 正在寫，Consumer 正要讀
+* 進程間共享同一塊物理內存區域，使得數據的共享和通信變得容易。
+* 創建一個共享的內存區域，進程將數據寫入共享內存時，其他進程可以立即讀取該數據。
+* good:效率&速度
+* bad:數據一致性&並發控制
 * ![image](https://hackmd.io/_uploads/H1qOis3RT.png)
 ### IPC in Message-Passing Systems
-* 透過 send, receive 溝通，類似於網路通訊
+* 進程之間通過發送和接收消息來進行通信，而不共享內存空間。
+* 處理分離，進程彼此之間相對獨立，進程通過發送消息將數據發送到目標進程，目標進程通過接收消息來獲取數據。
+* 可同步or非同步
+* good:更好的模塊化&抽象
+* bad:更消耗資源
 * 要考慮的點很多，分很多種
     * Direct or indirect
         * Direct : A 的訊息直接傳到 B 手上
         * indirect : A 把訊息放在郵箱裡，B 再去郵箱把訊息拿出來。
+    * ordinary or named pipe:
+        * ordinary : 一種在父子進程或者具有共同祖先的兄弟進程之間進行通信的機制，半雙工，意味著數據只能在一個方向上流動。(pipe():一端寫入，一端讀取)
+        * named pipe : 也稱FIFO，是一種通用的進程間通信機制，可在無關的進程之間使用，通常通過在文件系統中創建一個特殊的文件來實現。(mkfifo() 或 mknod() ，然後像標準文件一樣被打開、讀取和寫入。)
+    * Socket
+        * 一種通信機制，可於不同主機，不同進程，不同協定間通信，全雙工
     * Synchronization
         * Blocking : 
             * send : A 送完訊息需確認 B 收到
@@ -182,6 +267,10 @@
 * Remote Procedure Calls(RPC)
 
 # Chapter 4 : Threads & Concurrency
+* User thread : 用程序或用戶空間的程式庫所創建和管理的線程，僅存在於應用程序的地址空間。
+    * good  創建和調度開銷較小，可以根據需要自行管理線程，實現更高的彈性和自主性
+* Kernel thread : kernel所創建和管理的線程，存在於操作系統的內核空間中。
+    * good : 可利用如調度、同步和內存管理，提高系統的可靠性和穩定性，可跨平台。
 ## Multicore Programming
 ![image](https://hackmd.io/_uploads/H1tgXOTA6.png)
 ### Types of parallelism
@@ -234,14 +323,20 @@ CPU 空閒下來時，選一個 process 執行
 * Response time : 回應時間越短越好
 ## Scheduling Algorithms
 * FCFS (First Come First Served)
-    * Convoy effect : 先執行時間較久的 process 會導致 waiting time 較多
+    * 特色：按照作業到達的順序來進行排程，先到達的作業先被執行。
+    * 方法：將作業依照到達順序放入佇列中，依序執行佇列中的作業。
+    * 優點：簡單易懂，公平性高。
+    * 缺點：可能產生饑餓現象（一個長時間執行的作業可能導致其他作業長時間等待）。
     > 範例 1
     > ![image](https://hackmd.io/_uploads/HJG8Bvr1A.png)
     > 範例 2
     > ![image](https://hackmd.io/_uploads/BJ-6rvSyR.png)
     > 範例 2 比範例 1 更好，因為順序的原因導致 waiting time 較少
 * SJF (Shortest-Job-First)
-    * 較短的 process 優先
+    * 特色：選擇最短的作業優先執行，以減少平均等待時間。
+    * 方法：將所有待執行的作業按照執行所需的時間長短排序，每次選擇執行執行時間最短的作業。
+    * 優點：平均等待時間短，效率高。
+    * 缺點：可能出現饑餓現象（執行時間長的作業可能一直被推遲）。
     > 範例 1
     > ![image](https://hackmd.io/_uploads/SyffKsB1C.png)
     > 範例 2 (preemptive)  
@@ -249,15 +344,18 @@ CPU 空閒下來時，選一個 process 執行
     > waiting time : 每個 process 用**全部跑完的時間 - 抵達的時間 - 執行時間**
     > 舉例 process 1 : 從 10 開始全部跑完 - 最一開始執行到 1 被中斷
     > ![image](https://hackmd.io/_uploads/HyM7qjS10.png)
-    * 缺點 : 我們無法知道下個 process 的時間多少 => 只能用預測 (exponential averaging)
+    * 問題 : 我們無法知道下個 process 的時間多少 => 只能用預測 (exponential averaging)
         * 從上一個預測的值或上一個實際的值做預測，α = 1/2 為兩者以一樣的權重預測(0~1)
         * ![image](https://hackmd.io/_uploads/SJ283sSJA.png)
         > 範例  
         > ![image](https://hackmd.io/_uploads/SyvbpjrJC.png)
 * RR (Round Robin)
-    * 公平分配每個 process 的時間，時間到不管如何就切換。
     * 一個時間單位叫做 time quantum
     * 主要在減少 response time 的時間
+    * 特色：按照順序分配固定時間片的方式執行作業，當一個作業的時間片用完後，執行下一個作業。
+    * 方法：將所有待執行的作業按照到達順序放入佇列中，每次執行一個作業一個固定的時間片，然後執行下一個作業。
+    * 優點：公平性高，適合時間片短的情況。
+    * 缺點：可能產生上下文切換過多的情況，效率下降。
     * Performance
         * q large => FIFO
         * q small => 太頻繁切換導致 overhead 太大
@@ -267,7 +365,10 @@ CPU 空閒下來時，選一個 process 執行
     > Quantum = 4  
     > ![image](https://hackmd.io/_uploads/ryubvnKyA.png)
 * Priority Scheduling
-    * 每個 process 賦予一個 priority
+    * 特色：根據作業的優先級來進行排程，優先級高的作業先被執行。
+    * 方法：每個作業都有一個優先級，作業被選擇執行的順序取決於其優先級。
+    * 優點：能夠根據作業的重要性來進行排程，適用於多種場景。
+    * 缺點：可能出現優先級反轉的情況（低優先級作業長時間等待高優先級作業執行完畢）。
     * Preemptive
     * Nonpreemptive
     * Problem : Starvation (priority 小到一直有權限比他大的插隊)
@@ -374,12 +475,22 @@ CPU 空閒下來時，選一個 process 執行
     * 如果在雙核心以上，一個 core 在 busy waiting ，其他的 core 還可以動
     * 但在單核心如果沒有適當機制切換的話就會卡住
 ## ✭ Semaphores
+![image](https://hackmd.io/_uploads/SkLfJCkzA.png)
 * 兩個模式 : wait, signal
 * 兩個模式必須 atomic (不會被 interrupt)
 * wait : check S 的值是否大於 0，如果小於 0 就 wait，會把 S--
 * signal : 把 S++
 * Binary semaphore : 值在0, 1之間切換，如同 Mutex Locks
 * Counting semaphore : 可以計算
+## Mutex Locks vs Semaphores
+| 面向 | Semaphores | Mutex Locks |
+| ---- | ------ | ------ |
+| 定義 |一個整數變量,允許多個線程同時訪問一個資源。 |一個二進制變量,一次只有一個線程可以訪問一個資源。 |
+|所有權 |不被任何特定線程擁有。|由獲取該鎖的線程所有。|
+|複雜性 | 更加複雜。 |較少複雜。|
+|效率 |更加高效,因為多個線程可以同時訪問一個資源。 |通常效率較低。|
+|等待操作  |減少信號量的值。如果值為非負數,線程繼續;否則它將被阻塞,直到信號量變為非負。|如果互斥鎖當前被另一個線程鎖定,則阻塞該線程。|
+|信號操作(V)/解鎖 | 增加信號量的值。如果有線程被阻塞在信號量上,其中一個將被解除阻塞。 |釋放互斥鎖,允許另一個線程獲取它。|
 ### Semaphores Implementation with no Busy waiting
 * use waiting queue
 * block : if a process waiting, let it go the block
@@ -529,6 +640,8 @@ CPU 空閒下來時，選一個 process 執行
             > (Need 可以從 Max - Allocation 獲得)  
             > ![image](https://hackmd.io/_uploads/S1Q49WtWR.png)
         * Resource-Request Algorithm
+            > 比較 Available, Need  
+            > 如果 Available[i] > Need[i], Available[i] + Allocation[i]
             > ![image](https://hackmd.io/_uploads/BJv3aZY-A.png)
 ### Deadlock Detection
 * Single instance
@@ -602,5 +715,34 @@ CPU 空閒下來時，選一個 process 執行
     * logical memory 叫做 pages
 * 假設 pages 是連續的，但在 physical memory 可以隨便放不用連續，只需要紀錄好 frames, pages 的對應關係
 * page table : 存放 frames, pages 的對應關係
-* 還是有 Internal Fragmentation 的問題
-## Swapping
+* free frames list : 紀錄 free frames (還沒有放入空間的 physical memory )
+* page table 在 main memory 的表示
+    * page-table base register (PTBR) : 紀錄 page-table base
+    * page-table length register (PTLR) : 紀錄 page-table size
+* Address Translation Scheme
+    * page number : 可以透過 page number 查到對應的 frame number
+    * page offset : 固定的大小，因為 physical memory 和 logical memory 是一樣大的
+* ![image](https://hackmd.io/_uploads/BJvS0keM0.png)
+* 問題
+    * 還是有 Internal Fragmentation 的問題
+        * 將 physical memory 切的更細，但 page table 所佔的空間也會變大
+    * 要花兩倍讀寫記憶體的時間 : page table + physical memory
+        * 將 page table 放在 cache (TLB)
+            > TLB : 平行處理  
+            > 因為 TLB 很小，如果 TLB miss 就還是要用 page table  
+            > Hit ratio : 80% 的 page number 都查得到  
+            > 翻譯後置器（Translation Lookaside Buffer）的縮寫，是一種用於提高虛擬記憶體管理效率的硬體快取。TLB 主要用於處理虛擬地址到物理地址的轉換，以提高存取記憶體的速度。  
+            > 通常與虛擬記憶體系統結合使用。當 CPU 存取虛擬記憶體時，它發出一個虛擬地址。這個虛擬地址必須經過轉換才能找到對應的物理地址，而這個轉換過程需要額外的時間。為了加快這個轉換過程，TLB 將最近的一些虛擬地址和對應的物理地址的映射關係保存在快取中。  
+            > ![image](https://hackmd.io/_uploads/BJq9fggGC.png)
+    * page table 有可能會超出 physical memory 範圍
+        > Valid-invalid bit 紀錄 page 空間是否合法
+        > ![image](https://hackmd.io/_uploads/BJcx4eeG0.png)
+    * 有些 code 不需要每個都執行
+        > Shared Pages : page number 對應到同樣的 frame number
+        > ![image](https://hackmd.io/_uploads/r1T6NegMR.png)
+    * 實際情況中，page table 非常占空間
+        * Hierarchical Paging
+            > 兩層的 page table
+            > ![image](https://hackmd.io/_uploads/ByTlPgeGR.png)
+        * Hashed Page Tables
+        * Inverted Page Tables
