@@ -179,4 +179,200 @@
         * 觀察 page fault 頻率
         * 如果很低，代表應該還行，不會造成 thrashing
         * 如果高到一個程度，代表快 thrashing ，就要進行處理
-## Memory-Mapped Files
+# Chapter 11 : Mass-Storage Systems
+## HDD Scheduling
+* Performance
+    * 大部分的時間都在旋轉跟移動讀寫頭
+    * ![image](https://hackmd.io/_uploads/rynaZU5NR.png)
+### Disk Scheduling
+* FCFS
+* SCAN (elevator)
+    * 不要一直來回反覆移動，盡量只往一個方向移動
+    * 問題 : 如果 queue 平均分布，另一半的 request 會等很久
+    * ![image](https://hackmd.io/_uploads/ryRpvIcNA.png)
+* C-SCAN
+    * 只往一個方向處理
+    * 一個方向到底後退到 0 從頭開始
+    * ![image](https://hackmd.io/_uploads/BJBGj85VC.png)
+## NVM Scheduling
+* 優 : 不易損毀、速度快
+* 缺 : 壽命短、不能 rewrite
+* Controller Algorithms
+    * garbage collection : 當某個程式占用的一部分主記憶體空間不再被這個程式訪問時，這個程式會藉助垃圾回收演算法向作業系統歸還這部分主記憶體空間。
+    * wear leveling : 不要重複在同一個地方寫入太多次，要平均分散在不同的地方，不然那個地方容易壞掉。
+* Volatile Memory
+    * 將 ram 的一部分當作 driver 使用
+    * 與 cache, buffer 的差異
+        * cache, buffer 由 OS 管理，使用者不能控制
+        * Volatile Memory 可由使用者自行管理
+## Storage Device Management
+* Partition
+    * 切割不同用途
+* Logical formatting
+    * 檔案系統的方式儲存
+    * 電腦中的格式化是指這個
+## Swap-Space Management
+* 不是用檔案系統儲存，而是以 page 形式儲存
+## Storage Attachment
+### NAS
+* 透過 NFS, CIFS 協定實作 
+### Cloud
+* 透過 API request
+## RAID Structure
+* Disk striping : 將好幾顆硬碟當作一顆硬碟使用
+* Mirroring : 複製到幾顆硬碟上
+* RAID 0 : non-redundant striping
+    * 將好幾顆硬碟當作一顆硬碟使用
+    * 不能有任何一顆壞掉，否則資料會遺失
+* RAID 1 : mirrored disks
+    * 原本用 4 顆硬碟
+    * 現在用 8 顆硬碟，多的 4 顆跟前 4 顆資料一模一樣
+* RAID 4 : block-interleaved parity
+    * 多一個硬碟紀錄 parity (check sum)
+    * parity 能夠知道資料是否錯誤
+    * 如果 parity disk 壞掉就沒辦法驗算資料
+* RAID 5 : block-interleaved distributed parity
+    * 每一個 disk 都有 parity
+* RAID 6 : P + Q redundancy
+    * 多一個 parity 驗算並且存在每一個 disk
+* RAID 10 (RAID 1+0) : Striped mirrors
+    * 先複製再串起來
+* RAID (0+1) : mirrored stripes
+    * 先串起來再複製
+
+# Chapter 13 : File-System Interface
+## Access Methods
+* Sequential Access : 指資料的讀取或寫入必須按照資料在儲存介質上的物理順序進行。要訪問某一特定資料單元，必須先訪問該單元之前的所有資料。
+    * 訪問速度較慢，因為需要依次讀取或寫入資料。在讀取大量連續資料時效能較好，但在訪問隨機資料時效能較差。
+    * 優點：適合大數據量的連續讀取和寫入，結構簡單，成本低。
+    * 缺點：隨機存取效能差，訪問特定資料需遍歷前面的資料。
+* Direct Access : 指可以隨機地訪問儲存介質上的任意資料單元，而不必按照順序進行。可以直接跳轉到所需的資料單元，進行讀取或寫入操作。
+    * 訪問速度較快，可以隨機訪問任意資料單元，適合頻繁隨機讀取或寫入的應用場景。
+    * 優點：隨機訪問效能高，適合頻繁且隨機的讀寫操作。
+    * 缺點：結構相對複雜，成本較高。
+## Disk and Directory Structure
+### Single-Level Directory
+* Naming problem : 名字容易重複
+* Grouping problem : 不同功能的檔案混在一起
+### Two-Level Directory
+* Path name : 解決名字問題
+* Efficient searching
+* 無法解決 Grouping problem
+### Tree-Structured Directories
+* 不同目錄底下放不同用途的檔案
+* Efficient searching
+* 解決 Grouping problem
+### Acyclic-Graph Directories
+* 不同目錄底下可以共用同個檔案
+    > 如下圖 count 
+    > ![image](https://hackmd.io/_uploads/HylW_co4R.png)
+* 問題
+    * 同個檔案有多個名稱，刪除、編輯等等會有問題
+        * Link 同步
+### General Graph Directory
+* 會有 cycle
+    > 如下圖
+    > ![image](https://hackmd.io/_uploads/r1VyK5iE0.png)
+* 解決
+    * link 指向檔案，不能指向sub directory
+## File-System Mounting
+* 指將一個文件系統（例如一個磁碟分區、USB 驅動器或網絡共享）連接到操作系統的目錄樹中的一個目錄，使其成為該目錄的子樹，從而使該文件系統的內容可以通過該目錄進行訪問。
+## File Sharing
+* 同一個檔案可以讓不同使用者使用，只是有不同的權限
+* 透過 User IDs, Group IDs 判斷權限
+* 問題
+    * 權限
+    * 遠端
+    * 同步
+## Protection
+### Access Lists and Groups
+* Mode of access : read, write, execute
+* Three classes of users on Unix/Linux
+    * owner, group, public
+* example
+    * chmod 761 game
+    * mean
+        * owner => 111 => can r,w,x
+        * group => 110 => can r,w
+        * public => 001 => can x
+
+# Chapter 14 : File System Implementation
+## File-System Structure
+* File control block(FCB) : 紀錄檔案資訊
+### File System Layers
+* application programs -> logical file system -> file-organization module -> basic file system -> I/O control -> devices
+    * Logical file system
+        * 把檔名轉換成檔案編號
+    * file-organization module
+        * 轉換 logical block 到 physical block
+        * 管理 free space, disk allocation
+    * basic file system
+        * 接收指令並告訴 device driver
+        * 將常用檔案暫存在 caches
+        * 將檔案放在 buffer
+    * Device drivers
+        * 實作指定(read, write)
+## File-System Operations
+### On-disk Structures
+* Boot control block
+    * 開機所需要的檔案都放在裡面
+    * 通常是第一個 block
+* Volume control block
+    * 紀錄有多少 block, 有多少可用 block, 每個 block 多大等等
+* Directory structure
+    * 紀錄整個檔案的分布情況
+* Per-file File Control Block(FCB)
+    * 紀錄每個檔案個別的資訊
+### In-Memory File System Structures
+* Mount table
+    * 紀錄開機時所需要的檔案資訊
+* system-wide open-file table
+* per-process open-file table
+## Directory Implementation
+* Linear list
+    * 將所有檔案資訊都記錄起來
+    * 簡單、花時間
+* Hash Table
+    * 速度快，但可能會有碰撞
+## Allocation Methods
+### Contiguous
+* 將 block 依序擺放
+* 簡單 : 紀錄開始位置跟長度就可以了
+* 問題 : external fragmentation
+* 解決 : 
+    *  Extent-Based Systems
+        * 將多個小空間串在一起變成大空間
+### Linked (很像 link list)
+* 從第一個 block 往後串，紀錄下一個 block 的 pointer
+* 優點 : 不會有 external fragmentation
+* 缺點 : 
+    * 不可靠，如果中間有一個壞掉，會導致後面的 block 都找不到
+    * 速度慢
+### Indexed
+* 將所有可用位置的 pointer 集中起來放在 index table(index block)
+* 只需要拿到 index table 就可以拿到所有 pointer
+* 優點 : 速度快
+* 缺點 : index table 不能不見、壞掉
+## Free-Space Management
+* Bit vector 紀錄目前可用的欄位，但需要額外空間儲存
+* Link list 
+    * 優點 : 不會浪費空間
+    * 缺點 : 速度慢
+* Grouping
+    * 多個 block 為一組，一次記錄他們的情況
+### TRIMing
+* 針對 SSD ，因為 NVM 無法做覆寫
+* 所以當有 free 的位置出來後，只需要紀錄位置，不需要真的清除該位置的內容
+## Efficiency and Performance
+* 盡量讓 data 跟 metadata 放一起
+    * 讀到檔名後，可以更快速的讀取接下來的內容
+* Buffer cache 
+    * 讓經常使用到的資輛放在記憶體
+* Synchronous
+    * update 的時候要一直寫回去
+    * 可設為 asynchronous ，變成全部 update 結束後再一起寫回去
+* read-ahead 
+    * 如果之後可能要用到的話，先預先讀近來
+* Unified Buffer Cache
+    * 將重複的 cache 整合成一個 cache
+## Recovery
